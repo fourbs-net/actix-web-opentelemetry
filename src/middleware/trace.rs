@@ -6,6 +6,7 @@ use futures::{
     future::{ok, FutureExt, Ready},
     Future,
 };
+use opentelemetry::KeyValue;
 use opentelemetry::{
     global,
     sdk,
@@ -176,11 +177,13 @@ where
             http_route = formatter.format(&http_route).into();
         }
         let conn_info = req.connection_info();
+        let trace_id = parent_context.span().span_context().trace_id();
         let mut builder = self.tracer.span_builder(http_route.clone())
             .with_parent_context(parent_context)
             .with_trace_id(sdk::trace::IdGenerator::default().new_trace_id())
             .with_kind(SpanKind::Server);
         let mut attributes = Vec::with_capacity(11);
+        attributes.push(KeyValue::new("trace_id", trace_id.to_hex()));
         attributes.push(HTTP_METHOD.string(http_method_str(req.method())));
         attributes.push(HTTP_FLAVOR.string(http_flavor(req.version())));
         attributes.push(HTTP_HOST.string(conn_info.host().to_string()));
