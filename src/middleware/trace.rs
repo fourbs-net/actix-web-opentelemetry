@@ -8,8 +8,9 @@ use futures::{
 };
 use opentelemetry::{
     global,
+    sdk,
     propagation::Extractor,
-    trace::{FutureExt as OtelFutureExt, SpanKind, StatusCode, TraceContextExt, Tracer},
+    trace::{FutureExt as OtelFutureExt, SpanKind, StatusCode, TraceContextExt, Tracer, IdGenerator},
     Context,
 };
 use opentelemetry_semantic_conventions::trace::{
@@ -175,9 +176,10 @@ where
             http_route = formatter.format(&http_route).into();
         }
         let conn_info = req.connection_info();
-        let mut builder = self.tracer.span_builder(http_route.clone());
-        builder.parent_context = parent_context;
-        builder.span_kind = Some(SpanKind::Server);
+        let mut builder = self.tracer.span_builder(http_route.clone())
+            .with_parent_context(parent_context)
+            .with_trace_id(sdk::trace::IdGenerator::default().new_trace_id())
+            .with_kind(SpanKind::Server);
         let mut attributes = Vec::with_capacity(11);
         attributes.push(HTTP_METHOD.string(http_method_str(req.method())));
         attributes.push(HTTP_FLAVOR.string(http_flavor(req.version())));
