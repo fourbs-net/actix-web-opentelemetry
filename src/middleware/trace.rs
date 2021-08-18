@@ -178,7 +178,6 @@ where
         let conn_info = req.connection_info();
         let mut builder = self.tracer.span_builder(http_route.clone())
             .with_parent_context(parent_context)
-            .with_trace_id(sdk::trace::IdGenerator::default().new_trace_id())
             .with_kind(SpanKind::Server);
         let mut attributes = Vec::with_capacity(11);
         attributes.push(HTTP_METHOD.string(http_method_str(req.method())));
